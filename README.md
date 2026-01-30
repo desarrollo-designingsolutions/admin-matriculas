@@ -20,3 +20,5 @@ https://reverb.laravel.com/ =>  WebSocket server for Laravel
 https://laravel.com/docs/12.x/redis => predis como cliente de redis
 
 composer require laravel/pint --dev => limpiar lineas del codigo
+# admin-matriculas
+Administración de matriculas Instituto Sejong
