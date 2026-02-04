@@ -68,7 +68,7 @@ class CourseController extends Controller
 
             if ($request->book_id) {
                 $book = $this->courseBookRepository->store([
-                    'book_id' => $request->level_id,
+                    'book_id' => $request->book_id,
                     'course_id' => $course->id
                 ]);
             }
@@ -131,14 +131,16 @@ class CourseController extends Controller
 
             if ($request->book_id) {
                 $book = $this->courseBookRepository->store([
-                    'id' => $courseBook->id,
-                    'book_id' => $request->level_id,
+                    'id' => $courseBook?->id,
+                    'book_id' => $request->book_id,
                     'course_id' => $course->id
                 ]);
+            } else {
+                $courseBook->delete();
             }
             
             $days = $this->courseDayRepository->store([
-                'id' => $courseDay->id,
+                'id' => $courseDay?->id,
                 'time' => $request->time,
                 'modalidad' => $request->modalidad,
                 'course_init' => $request->course_init,
@@ -151,7 +153,7 @@ class CourseController extends Controller
             ]);
 
             $discount = $this->discountRepository->store([
-                'id' => $discount->id,
+                'id' => $discount?->id,
                 'start_date' => $request->start_date,
                 'finish_date' => $request->finish_date,
                 'discount' => $request->discount,
