@@ -30,8 +30,10 @@ class CourseRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
+                    'id',
                     'name',
                 ])
+                ->orderBy('id', 'desc')
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;

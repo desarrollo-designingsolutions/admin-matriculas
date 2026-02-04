@@ -30,8 +30,10 @@ class DayRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
+                    'id',
                     'day',
                 ])
+                ->orderBy('id', 'desc')
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;

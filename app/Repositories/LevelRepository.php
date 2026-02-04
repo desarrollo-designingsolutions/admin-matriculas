@@ -30,8 +30,10 @@ class LevelRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
+                    'id',
                     'level',
                 ])
+                ->orderBy('id', 'desc')
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;

@@ -23,4 +23,7 @@ Route::middleware(['check.permission:course.list'])->group(function () {
     Route::post('/course/update/{id}', [CourseController::class, 'update']);
 
     Route::delete('/course/delete/{id}', [CourseController::class, 'delete']);
+
+    Route::post('/course/changeStatus', [CourseController::class, 'changeStatus']);
+
 });

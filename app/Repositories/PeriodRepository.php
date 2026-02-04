@@ -30,8 +30,10 @@ class PeriodRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
+                    'id',
                     'period',
                 ])
+                ->orderBy('id', 'desc')
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;

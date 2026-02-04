@@ -6,17 +6,26 @@ use App\Http\Requests\Course\CourseStoreRequest;
 use App\Http\Resources\Course\CourseFormResource;
 use App\Http\Resources\Course\CourseListResource;
 use App\Repositories\CourseRepository;
+use App\Repositories\CourseBookRepository;
+use App\Repositories\CourseDayRepository;
+use App\Repositories\DiscountRepository;
 use App\Traits\HttpResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\CourseBook;
+use App\Models\CourseDay;
+use App\Models\Discount;
 
 class CourseController extends Controller
 {
     use HttpResponseTrait;
 
     public function __construct(
-        protected CourseRepository $courseRepository
+        protected CourseRepository $courseRepository,
+        protected CourseBookRepository $courseBookRepository,
+        protected CourseDayRepository $courseDayRepository,
+        protected DiscountRepository $discountRepository,
     ) {}
 
     public function list(Request $request)
@@ -51,8 +60,40 @@ class CourseController extends Controller
     public function store(CourseStoreRequest $request)
     {
         return $this->runTransaction(function () use ($request) {
-            $post = $request->except([]);
-            $data = $this->courseRepository->store($post);
+            $course = $this->courseRepository->store([
+                'name' => $request->name,
+                'level_id' => $request->level_id,
+                'period_id' => $request->period_id
+            ]);
+
+            if ($request->book_id) {
+                $book = $this->courseBookRepository->store([
+                    'book_id' => $request->level_id,
+                    'course_id' => $course->id
+                ]);
+            }
+            
+            $days = $this->courseDayRepository->store([
+                'time' => $request->time,
+                'modalidad' => $request->modalidad,
+                'course_init' => $request->course_init,
+                'price' => $request->price,
+                'orden' => $request->orden,
+                'periodo' => $request->periodo,
+                'status' => $request->status,
+                'day_id' => $request->day_id,
+                'course_id' => $course->id
+            ]);
+
+            $discount = $this->discountRepository->store([
+                'start_date' => $request->start_date,
+                'finish_date' => $request->finish_date,
+                'discount' => $request->discount,
+                'payback' => 0,
+                'link' => $request->link,
+                'link_book' => $request->link_book,
+                'day_course_id' => $days->id,
+            ]);
 
             return [
                 'code' => 200,
@@ -93,6 +134,19 @@ class CourseController extends Controller
             $data = $this->courseRepository->find($id);
             if ($data) {
                 $data->delete();
+
+                // Borra el libro
+                CourseBook::where('course_id', $id)->delete();
+                
+                // Busca el CourseDay
+                $courseDay = CourseDay::where('course_id', $id)->first();
+
+                // Elimina el descuento
+                Discount::where('day_course_id', $courseDay?->id)->delete();
+
+                // Elimina el CourseDay
+                $courseDay->delete();
+
                 $msg = 'Registro eliminado correctamente';
             } else {
                 $msg = 'El registro no existe';
@@ -104,5 +158,21 @@ class CourseController extends Controller
                 'message' => $msg,
             ];
         }, 200);
+    }
+
+    public function changeStatus(Request $request)
+    {
+        return $this->runTransaction(function () use ($request) {
+            $model = CourseDay::where('course_id', $request->id)->first();
+            $model->status = $request->value;
+            $model->save();
+
+            ($model->status == "Activo") ? $msg = 'Activado' : $msg = 'Finalizado';
+
+            return [
+                'code' => 200,
+                'message' => 'Curso '.$msg.' con éxito',
+            ];
+        });
     }
 }
