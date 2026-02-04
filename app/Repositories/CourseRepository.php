@@ -21,7 +21,18 @@ class CourseRepository extends BaseRepository
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
         return $this->cacheService->remember($cacheKey, function () {
-            $query = QueryBuilder::for($this->model->query())
+
+            $coursesTable = $this->model->getTable();      // courses
+            $daysTable    = (new \App\Models\CourseDay)->getTable(); // day_courses
+
+            $query = QueryBuilder::for(
+                    $this->model->newQuery()
+                        ->leftJoin($daysTable, function ($join) use ($coursesTable, $daysTable) {
+                            $join->on("$daysTable.course_id", '=', "$coursesTable.id")
+                                ->whereNull("$daysTable.deleted_at"); // si usas SoftDeletes en CourseDay
+                        })
+                        ->select("$coursesTable.*") // IMPORTANTE para que el modelo sea Course
+                )
                 ->allowedFilters([
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->where(function ($q) use ($value) {
@@ -32,11 +43,15 @@ class CourseRepository extends BaseRepository
                 ->allowedSorts([
                     'id',
                     'name',
+                    AllowedSort::field('is_active', 'day_courses.status'),
                 ])
-                ->orderBy('id', 'desc')
+                // Orden fijo: primero status (day_courses) y luego id (courses)
+                ->orderBy("$daysTable.status", 'asc') // o 'asc' según tu lógica
+                ->orderBy("$coursesTable.id", 'desc')
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
+
         }, Constants::REDIS_TTL);
     }
 

@@ -18,4 +18,9 @@ class Course extends Model
         'level_id',
         'period_id',
     ];
+
+    public function day()
+    {
+        return $this->hasOne(CourseDay::class, 'course_id', 'id');
+    }
 }
